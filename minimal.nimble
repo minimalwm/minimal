@@ -13,9 +13,7 @@ requires "nim >= 0.20.0"
 
 # Library Dependencies
 requires "x11"
-
-# Foreign Dependencies
-foreignDep "libx11-dev"
+# foreignDep "libx11-dev"
 
 # -----------------------------------------------------#
 # Task Definitions ------------------------------------#
