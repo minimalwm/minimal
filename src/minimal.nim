@@ -25,6 +25,7 @@ when isMainModule:
   var xinerama_status = XineramaIsActive(display)
 
   if xinerama_status.isFalse:   
+    
     # Is there a better way to do this and I just suck.
     quit("Xinerama is not loaded.", QuitFailure)
 

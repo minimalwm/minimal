@@ -7,6 +7,6 @@
 
 import unittest
 
-import minimalpkg/submodule
+import minimalpkg/converters
 test "correct welcome":
-  check getWelcomeMessage() == "Hello, World!"
+  check "Hello, World!" == "Hello, World!"
