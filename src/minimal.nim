@@ -1,4 +1,6 @@
-import x11/xlib, x11/xutil, x11/x, x11/keysym
+import
+  x11/[xlib, xutil, x, keysym],
+  minimalpkg/keybinds
 
 var
   dpy = XOpenDisplay(nil)
@@ -11,12 +13,18 @@ if dpy == nil: quit 1
 discard dpy.XGrabKey(dpy.XKeysymToKeycode(XStringToKeysym("F1")).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
 discard dpy.XGrabButton(1, Mod4Mask, dpy.XDefaultRootWindow, 1, ButtonPressMask or ButtonReleaseMask or PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
 discard dpy.XGrabButton(3, Mod4Mask, dpy.XDefaultRootWindow, 1, ButtonPressMask or ButtonReleaseMask or PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
+discard dpy.XGrabKey(dpy.XKeysymToKeycode(XStringToKeysym("q")).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
 
 while true:
   discard dpy.XNextEvent(addr ev)
   echo "Type: ", ev.theType, ", subwindow: ", ev.xkey.subwindow, " ", ev.xbutton.subwindow, " ", start.subwindow
+  echo "keycode: ", ev.xkey.keycode
   if ev.theType == KeyPress and ev.xkey.subwindow.culong != None:
-    discard dpy.XRaiseWindow(ev.xkey.subwindow)
+    case ev.xkey.keycode:
+      of QUIT:
+        discard dpy.XDestroyWindow(ev.xkey.subwindow)
+      else:
+        continue
   elif ev.theType == ButtonPress and ev.xbutton.subwindow.culong != None:
     discard dpy.XGetWindowAttributes(ev.xbutton.subwindow, addr attr)
     start = ev.xbutton
