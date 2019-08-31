@@ -24,5 +24,8 @@ $ DISPLAY=:1 xterm
 ## Usage
 
 As of now, `minimal` only supports moving & resizing windows. That can
-be done using `Meta` + left mouse & `Meta` + right mouse, respectively.
-Windows can be raised using `Meta` + `F1`.
+be done using `Mod4` + left mouse & `Mod4` + right mouse, respectively.
+Windows can be raised using `Mod4` + `F1`.
+
+`xterm` windows can be spawned using `Mod4` + `Return` & destroyed
+using `Mod4` + `Q`.
