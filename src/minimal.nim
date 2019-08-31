@@ -16,7 +16,9 @@ discard dpy.XGrabButton(1, Mod4Mask, dpy.XDefaultRootWindow, 1, ButtonPressMask 
 discard dpy.XGrabButton(3, Mod4Mask, dpy.XDefaultRootWindow, 1, ButtonPressMask or ButtonReleaseMask or PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
 discard dpy.XGrabKey(dpy.XKeysymToKeycode(XStringToKeysym("q")).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
 
-var l: cstringArray
+var
+  l: cstringArray
+  pid: Pid
 
 while true:
   discard dpy.XNextEvent(addr ev)
@@ -28,7 +30,8 @@ while true:
         discard dpy.XDestroyWindow(ev.xkey.subwindow)
       of TERM:
         l = @["xterm"].allocCStringArray
-        if fork() == 0:
+        pid = fork()
+        if pid == 0:
           discard execvp(l[0], l)
         l.deallocCStringArray
       else:
