@@ -1,6 +1,7 @@
 import
   x11/[xlib, xutil, x, keysym],
-  minimalpkg/keybinds
+  minimalpkg/keybinds,
+  posix
 
 var
   dpy = XOpenDisplay(nil)
@@ -10,10 +11,12 @@ var
 
 if dpy == nil: quit 1
 
-discard dpy.XGrabKey(dpy.XKeysymToKeycode(XStringToKeysym("F1")).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
+discard dpy.XGrabKey(dpy.XKeysymToKeycode(XK_Return).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
 discard dpy.XGrabButton(1, Mod4Mask, dpy.XDefaultRootWindow, 1, ButtonPressMask or ButtonReleaseMask or PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
 discard dpy.XGrabButton(3, Mod4Mask, dpy.XDefaultRootWindow, 1, ButtonPressMask or ButtonReleaseMask or PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
 discard dpy.XGrabKey(dpy.XKeysymToKeycode(XStringToKeysym("q")).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
+
+var l: cstringArray
 
 while true:
   discard dpy.XNextEvent(addr ev)
@@ -23,6 +26,11 @@ while true:
     case ev.xkey.keycode:
       of QUIT:
         discard dpy.XDestroyWindow(ev.xkey.subwindow)
+      of TERM:
+        l = @["xterm"].allocCStringArray
+        if fork() == 0:
+          discard execvp(l[0], l)
+        l.deallocCStringArray
       else:
         continue
   elif ev.theType == ButtonPress and ev.xbutton.subwindow.culong != None:

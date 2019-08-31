@@ -3,4 +3,4 @@
 
 const
   QUIT* = 24
-
+  TERM* = 36
