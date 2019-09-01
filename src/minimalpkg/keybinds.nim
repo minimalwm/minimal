@@ -4,3 +4,6 @@
 const
   QUIT* = 24
   TERM* = 36
+
+# includes modifier
+const keys = []

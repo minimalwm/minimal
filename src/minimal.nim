@@ -9,7 +9,7 @@ var
   attr: TXWindowAttributes
   ksym: TKeySym
   kstr: cstring
-
+  handler: TXErrorHandler
 
 if dpy == nil:
   echo "error: failed to open X display"
@@ -23,8 +23,11 @@ discard dpy.XGrabButton(3, Mod4Mask, dpy.XDefaultRootWindow, 1, ButtonPressMask 
 discard dpy.XGrabKey(dpy.XKeysymToKeycode(XStringToKeysym("q")).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
 discard dpy.XGrabKey(dpy.XKeysymToKeycode(XK_Return).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
 
-while true:
+# initialize error handler
+handler = xerror
+discard XSetErrorHandler(handler)
 
+while true:
   discard dpy.XNextEvent(addr ev)
   echo "Type: ", ev.theType, ", subwindow: ", ev.xkey.subwindow, " ", ev.xbutton.subwindow, " ", start.subwindow
   echo "keycode: ", ev.xkey.keycode
