@@ -121,6 +121,8 @@ proc main() =
       dpy.resizewindow(ev)
     elif ev.theType == ButtonRelease:
       start.subwindow = None
+    elif ev.theType == MapRequest:
+      discard dpy.XMapWindow(ev.xkey.subwindow)
 
 
 echo("the mnml window manager")
