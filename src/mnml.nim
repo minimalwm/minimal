@@ -75,8 +75,6 @@ proc resizewindow(dpy: PDisplay, ev: TXEvent) =
     cuint(max(1, attr.width + (if start.button == 3: xdiff else: 0))),
     cuint(max(1, attr.height + (if start.button == 3: ydiff else: 0))))
 
-
-
 proc main() =
   if dpy == nil:
     die("mnml: error opening X display\n")
@@ -111,7 +109,6 @@ proc main() =
         of "Return":
           var l = @["xterm"].allocCStringArray
           spawn(l)
-          discard dpy.XMapSubwindows(ev.xkey.subwindow)
           l.deallocCStringArray
         else:
           continue
@@ -122,7 +119,7 @@ proc main() =
     elif ev.theType == ButtonRelease:
       start.subwindow = None
     elif ev.theType == MapRequest:
-      discard dpy.XMapWindow(ev.xkey.subwindow)
+      discard dpy.XMapWindow(ev.xmaprequest.window)
 
 
 echo("the mnml window manager")
