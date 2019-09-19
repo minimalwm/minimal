@@ -9,8 +9,8 @@ var
   ksym: TKeySym
   kstr: cstring
   start: TXButtonEvent
-  root: TWindow
   attr: TXWindowAttributes
+  wa: TXSetWindowAttributes
 
 # launch programs
 proc spawn*(s: cstringArray) =
@@ -37,7 +37,8 @@ proc xerror*(dpy: PDisplay, ee: PXErrorEvent): cint {.cdecl.} =
 #      (ee.request_code.cuint == XGrabKey and ee.error_code.cuint == BadAccess) or
 #      (ee.request_code.cuint == XCopyArea and ee.error_code.cuint == BadDrawable):
   if ee.error_code.cint == BadWindow:
-    stderr.write("mnml: fatal error: error code and request code: ", ee.error_code.cuint, " " , ee.request_code.cuint, "\n")
+    stderr.write("mnml: fatal error: error code and request code: ",
+      ee.error_code.cuint, " " , ee.request_code.cuint, "\n")
     return 0
   return 0
 
@@ -52,11 +53,17 @@ proc checkotherwm*() =
   discard XSetErrorHandler(xerror)
   discard XSync(dpy, 0)
 
+proc grabkeys() =
+  var kcode: TKeyCode
+  discard dpy.XUngrabKey(AnyKey, AnyModifier, dpy.XDefaultRootWindow())
+  return
+
 proc setup*() =
-  var wa: TXSetWindowAttributes
   wa.event_mask = SubstructureRedirectMask or SubstructureNotifyMask or ButtonPressMask or 
     EnterWindowMask or LeaveWindowMask or StructureNotifyMask or PropertyChangeMask
-  discard dpy.XChangeWindowAttributes(root, CWEventMask, addr wa)
+  discard dpy.XChangeWindowAttributes(dpy.XDefaultRootWindow, CWEventMask, addr wa)
+  discard XSetErrorHandler(xerror)
+  discard dpy.XSelectInput(dpy.XDefaultRootWindow, wa.event_mask)
 
 proc raisewindow(dpy: PDisplay, ev: TXEvent) =
   echo "raise"
@@ -78,22 +85,17 @@ proc resizewindow(dpy: PDisplay, ev: TXEvent) =
 proc main() =
   if dpy == nil:
     die("mnml: error opening X display\n")
-  root = dpy.XDefaultRootWindow()
   checkotherwm()
   setup()
 
   # mouse actions
-  discard dpy.XGrabButton(1, Mod4Mask, root, 1, ButtonPressMask or ButtonReleaseMask or PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
-  discard dpy.XGrabButton(3, Mod4Mask, root, 1, ButtonPressMask or ButtonReleaseMask or PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
+  discard dpy.XGrabButton(1, Mod4Mask, dpy.XDefaultRootWindow, 1, ButtonPressMask or ButtonReleaseMask or PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
+  discard dpy.XGrabButton(3, Mod4Mask, dpy.XDefaultRootWindow, 1, ButtonPressMask or ButtonReleaseMask or PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
   
-  # FIXME: throws BadWindow, also closes WM session
-  discard dpy.XGrabKey(dpy.XKeysymToKeycode(XStringToKeysym("q")).cint, Mod4Mask, root, 1, GrabModeAsync, GrabModeAsync)
-  discard dpy.XGrabKey(dpy.XKeysymToKeycode(XK_Return).cint, Mod4Mask, root, 1, GrabModeAsync, GrabModeAsync)
+  discard dpy.XGrabKey(dpy.XKeysymToKeycode(XStringToKeysym("q")).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
+  discard dpy.XGrabKey(dpy.XKeysymToKeycode(XK_Return).cint, Mod4Mask, dpy.XDefaultRootWindow, 1, GrabModeAsync, GrabModeAsync)
 
   # initialize error handler
-  discard XSetErrorHandler(xerror)
-
-
   while true:
     discard dpy.XNextEvent(addr ev)
     echo "Type: ", ev.theType, ", subwindow: ", ev.xkey.subwindow, " ", ev.xbutton.subwindow, " ", start.subwindow
@@ -104,11 +106,11 @@ proc main() =
       echo "keystring: ", kstr
       case $kstr:
         of "q":
-          discard dpy.XUnmapWindow(ev.xkey.subwindow)
-          discard dpy.XDestroyWindow(ev.xkey.subwindow)
+          discard dpy.XUnmapWindow(ev.xunmap.window)
         of "Return":
-          var l = @["xterm"].allocCStringArray
+          var l = @["urxvt"].allocCStringArray
           spawn(l)
+          echo "mapping"
           l.deallocCStringArray
         else:
           continue
@@ -118,8 +120,13 @@ proc main() =
       dpy.resizewindow(ev)
     elif ev.theType == ButtonRelease:
       start.subwindow = None
+    elif ev.theType == MapNotify:
+      echo "got MapNotify"
     elif ev.theType == MapRequest:
       discard dpy.XMapWindow(ev.xmaprequest.window)
+    elif ev.theType == UnmapNotify:
+      echo "got UnmapNotify"
+      discard dpy.XDestroyWindow(ev.xunmap.window)
 
 
 echo("the mnml window manager")
